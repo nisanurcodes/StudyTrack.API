@@ -7,22 +7,22 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Render için gerekli
+// ?? Render için gerekli
 builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
 // Controllers
 builder.Services.AddControllers();
 
-// CORS
+// ?? CORS (TÜM LOCAL PORTLAR + ileride Vercel için hazýr)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy.WithOrigins(
-                "http://localhost:5180",
+                "http://localhost:5173",
+                "http://localhost:5174",
                 "http://localhost:5177",
-                "http://localhost:5173"
-              // Buraya sonra Vercel linkini ekleyeceðiz
+                "http://localhost:5180"
               )
               .AllowAnyHeader()
               .AllowAnyMethod();
@@ -82,14 +82,16 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Swagger'ý production'da da aç
+// ?? Swagger production’da da açýk
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
+// ?? CORS
 app.UseCors("AllowFrontend");
 
+// Auth
 app.UseAuthentication();
 app.UseAuthorization();
 
