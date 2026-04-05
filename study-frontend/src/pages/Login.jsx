@@ -22,7 +22,7 @@ export default function Login() {
     setError('')
 
     try {
-      const response = await api.post('/api/Auth/login', {
+      const response = await api.post('/Auth/login', {
         email: form.email,
         password: form.password,
       })
@@ -41,10 +41,14 @@ export default function Login() {
     } catch (err) {
       if (err.response?.status === 401) {
         setError('E-posta veya şifre hatalı 🥺')
+      } else if (err.response?.status === 404) {
+        setError('Login endpoint bulunamadı ❌')
+      } else if (err.response?.status === 500) {
+        setError('Sunucuda bir hata oluştu. JWT ayarlarını kontrol et.')
       } else if (err.response?.data?.message) {
         setError(err.response.data.message)
       } else if (err.code === 'ERR_NETWORK') {
-        setError('Sunucuya bağlanılamadı. Backend çalışıyor mu? 🤔')
+        setError('Sunucuya bağlanılamadı 🤔')
       } else {
         setError('Bir şeyler ters gitti, tekrar dene!')
       }
@@ -127,12 +131,20 @@ export default function Login() {
                 fontFamily: 'Fredoka, sans-serif',
                 fontSize: '40px',
                 color: '#d81b60',
+                margin: 0,
               }}
             >
               StudyTrack
             </h1>
 
-            <p style={{ fontSize: '14px', color: '#f06292' }}>
+            <p
+              style={{
+                fontSize: '14px',
+                color: '#f06292',
+                marginTop: '8px',
+                marginBottom: 0,
+              }}
+            >
               Hedeflerine doğru adım at! 🌟
             </p>
           </div>
@@ -157,6 +169,7 @@ export default function Login() {
                 borderRadius: '16px',
                 background: '#fce4ec',
                 color: '#c62828',
+                fontSize: '14px',
               }}
             >
               💔 {error}
@@ -174,15 +187,35 @@ export default function Login() {
               style={inputStyle}
             />
 
-            <input
-              type={showPassword ? 'text' : 'password'}
-              name="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-              required
-              style={{ ...inputStyle, marginTop: '12px' }}
-            />
+            <div style={{ position: 'relative', marginTop: '12px' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={handleChange}
+                required
+                style={{ ...inputStyle, paddingRight: '90px' }}
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  border: 'none',
+                  background: 'transparent',
+                  color: '#c2185b',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                }}
+              >
+                {showPassword ? 'Gizle' : 'Göster'}
+              </button>
+            </div>
 
             <button
               type="submit"
@@ -196,13 +229,16 @@ export default function Login() {
                 background: '#e91e8c',
                 color: 'white',
                 fontWeight: 700,
+                fontSize: '15px',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                opacity: loading ? 0.7 : 1,
               }}
             >
               {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
             </button>
           </form>
 
-          <p style={{ textAlign: 'center', marginTop: '16px' }}>
+          <p style={{ textAlign: 'center', marginTop: '16px', color: '#6a1b4d' }}>
             Hesabın yok mu? <Link to="/register">Kayıt ol</Link>
           </p>
         </div>
