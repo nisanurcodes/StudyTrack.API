@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import api from '../api/axios'
+import axios from 'axios'
 
 const DECORATIONS = ['🌟', '🎯', '💡', '🦋', '🌈', '⭐', '🎀']
 
@@ -43,11 +43,19 @@ export default function Register() {
     setLoading(true)
 
     try {
-      await api.post('/Auth/register', {
-        name: form.username,
-        email: form.email,
-        password: form.password,
-      })
+      await axios.post(
+        'https://studytrack-api-nu1x.onrender.com/api/Auth/register',
+        {
+          name: form.username,
+          email: form.email,
+          password: form.password,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
 
       setSuccess('Hesabın oluşturuldu! 🎉')
 
