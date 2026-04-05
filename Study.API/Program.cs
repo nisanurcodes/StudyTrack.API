@@ -7,29 +7,28 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Render için gerekli
+// Render
 builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
-// Controllers
 builder.Services.AddControllers();
 
-// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .AllowAnyOrigin()
+            .WithOrigins(
+                "http://localhost:5173",
+                "https://localhost:5173"
+            )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
 
-// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// JWT Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -46,7 +45,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -78,12 +76,11 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-Console.WriteLine("=== CORS VERSION 2 ACTIVE ===");
-
 app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseRouting();
+
 app.UseCors("AllowFrontend");
 
 // app.UseHttpsRedirection();
