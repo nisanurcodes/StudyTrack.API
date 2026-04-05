@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import api from '../api/axios'
+import axios from 'axios'
 
 const DECORATIONS = ['✨', '🌸', '📚', '⭐', '🎀', '💫', '🌙', '🍓']
 
@@ -22,10 +22,18 @@ export default function Login() {
     setError('')
 
     try {
-      const response = await api.post('/Auth/login', {
-        email: form.email,
-        password: form.password,
-      })
+      const response = await axios.post(
+        'https://studytrack-api-nu1x.onrender.com/api/Auth/login',
+        {
+          email: form.email,
+          password: form.password,
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
 
       const token =
         response.data.token ||
@@ -39,12 +47,16 @@ export default function Login() {
         setError('Token alınamadı, lütfen tekrar deneyin.')
       }
     } catch (err) {
+      console.error('LOGIN ERROR:', err)
+
       if (err.response?.status === 401) {
-        setError('E-posta veya şifre hatalı 🥺')
+        setError(err.response?.data?.message || 'E-posta veya şifre hatalı 🥺')
       } else if (err.response?.status === 404) {
         setError('Login endpoint bulunamadı ❌')
+      } else if (err.response?.status === 405) {
+        setError('İstek yanlış adrese gidiyor gibi görünüyor.')
       } else if (err.response?.status === 500) {
-        setError('Sunucuda bir hata oluştu. JWT ayarlarını kontrol et.')
+        setError('Sunucuda bir hata oluştu.')
       } else if (err.response?.data?.message) {
         setError(err.response.data.message)
       } else if (err.code === 'ERR_NETWORK') {
