@@ -13,19 +13,19 @@ builder.WebHost.UseUrls("http://0.0.0.0:10000");
 // Controllers
 builder.Services.AddControllers();
 
-// ?? CORS (TÜM LOCAL PORTLAR + ileride Vercel için hazýr)
+// ?? CORS (TÜM LOCALHOST PORTLARINA ÝZÝN)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:5177",
-                "http://localhost:5180"
-              )
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        policy
+            .SetIsOriginAllowed(origin =>
+            {
+                return Uri.TryCreate(origin, UriKind.Absolute, out var uri)
+                    && uri.Host == "localhost";
+            })
+            .AllowAnyHeader()
+            .AllowAnyMethod();
     });
 });
 
