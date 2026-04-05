@@ -7,22 +7,21 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Render için port
+// Render port
 builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
-// 🔥 CORS (Vercel + localhost hepsine izin)
+// CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
             .SetIsOriginAllowed(origin =>
-            {
-                return origin.StartsWith("http://localhost:") ||
-                       origin.EndsWith(".vercel.app");
-            })
+                origin.StartsWith("http://localhost:") ||
+                origin.EndsWith(".vercel.app"))
             .AllowAnyHeader()
-            .AllowAnyMethod();
+            .AllowAnyMethod()
+            .AllowCredentials();
     });
 });
 
@@ -89,14 +88,14 @@ using (var scope = app.Services.CreateScope())
     db.Database.Migrate();
 }
 
-// Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// 🔥 CORS (çok önemli burada olması)
-app.UseCors("AllowFrontend");
+app.UseHttpsRedirection();
 
 app.UseRouting();
+
+app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
