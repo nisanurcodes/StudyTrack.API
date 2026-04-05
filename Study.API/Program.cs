@@ -24,7 +24,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:5177",
                 "http://localhost:5178",
                 "http://localhost:5179",
-                "https://studytrack-api-nu1x.onrender.com"
+                "https://studytrack-api-nu1x.onrender.com",
+                "https://study-track-api.vercel.app"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
