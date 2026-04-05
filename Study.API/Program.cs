@@ -7,23 +7,19 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ?? Render için gerekli
+// Render için gerekli
 builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
 // Controllers
 builder.Services.AddControllers();
 
-// ?? CORS (TÜM LOCALHOST PORTLARINA ÝZÝN)
+// CORS - geliþtirme için tamamen açýk
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .SetIsOriginAllowed(origin =>
-            {
-                return Uri.TryCreate(origin, UriKind.Absolute, out var uri)
-                    && uri.Host == "localhost";
-            })
+            .AllowAnyOrigin()
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -82,16 +78,16 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// ?? Swagger production’da da açýk
+// Swagger production'da da açýk
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
-
-// ?? CORS
+// CORS
 app.UseCors("AllowFrontend");
 
-// Auth
+// Render'da sorun çýkardýðý için kapalý
+// app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
