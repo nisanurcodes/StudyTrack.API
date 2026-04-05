@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+ï»¿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -7,7 +7,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Render için
+// Render iÃ§in
 builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
 // Controllers
@@ -70,10 +70,16 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 
-// ?? CORS FIX (KESÝN ÇÖZÜM)
+// ðŸ”¥ DÄ°NAMÄ°K CORS (EN SAÄžLAM Ã‡Ã–ZÃœM)
 app.Use(async (context, next) =>
 {
-    context.Response.Headers["Access-Control-Allow-Origin"] = "http://localhost:5173";
+    var origin = context.Request.Headers["Origin"].ToString();
+
+    if (!string.IsNullOrEmpty(origin) && origin.StartsWith("http://localhost:"))
+    {
+        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
+    }
+
     context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
     context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
 
@@ -85,7 +91,6 @@ app.Use(async (context, next) =>
 
     await next();
 });
-
 
 app.UseRouting();
 
