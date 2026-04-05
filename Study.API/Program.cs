@@ -10,6 +10,27 @@ var builder = WebApplication.CreateBuilder(args);
 // Render için
 builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
+// CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175",
+                "http://localhost:5176",
+                "http://localhost:5177",
+                "http://localhost:5178",
+                "http://localhost:5179",
+                "https://studytrack-api-nu1x.onrender.com"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // Controllers
 builder.Services.AddControllers();
 
@@ -47,7 +68,6 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Description = "JWT token gir"
     });
-
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -69,33 +89,10 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-
-// 🔥 DİNAMİK CORS (EN SAĞLAM ÇÖZÜM)
-app.Use(async (context, next) =>
-{
-    var origin = context.Request.Headers["Origin"].ToString();
-
-    if (!string.IsNullOrEmpty(origin) && origin.StartsWith("http://localhost:"))
-    {
-        context.Response.Headers["Access-Control-Allow-Origin"] = origin;
-    }
-
-    context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
-    context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
-
-    if (context.Request.Method == "OPTIONS")
-    {
-        context.Response.StatusCode = 204;
-        return;
-    }
-
-    await next();
-});
+// CORS middleware sırası çok önemli!
+app.UseCors("AllowAll");
 
 app.UseRouting();
-
-// app.UseHttpsRedirection();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
