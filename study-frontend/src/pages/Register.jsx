@@ -43,7 +43,7 @@ export default function Register() {
     setLoading(true)
 
     try {
-      await api.post('/api/Auth/register', {
+      await api.post('/Auth/register', {
         name: form.username,
         email: form.email,
         password: form.password,
@@ -55,12 +55,16 @@ export default function Register() {
         navigate('/login')
       }, 1500)
     } catch (err) {
-      if (err.response?.data?.message) {
-        setError(err.response.data.message)
-      } else if (err.response?.status === 409) {
+      console.error('REGISTER ERROR:', err)
+
+      if (err.response?.status === 409) {
         setError('Bu e-posta zaten kullanılıyor 😅')
+      } else if (err.response?.status === 400) {
+        setError(err.response?.data?.message || 'Girilen bilgiler geçersiz.')
+      } else if (err.response?.data?.message) {
+        setError(err.response.data.message)
       } else if (err.code === 'ERR_NETWORK') {
-        setError('Sunucuya bağlanılamadı. Backend çalışıyor mu? 🤔')
+        setError('Sunucuya bağlanılamadı 🤔')
       } else {
         setError('Kayıt sırasında bir hata oluştu!')
       }
