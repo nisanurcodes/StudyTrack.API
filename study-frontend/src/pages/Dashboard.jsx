@@ -50,6 +50,12 @@ export default function Dashboard() {
     isCompleted: false,
   })
 
+  const toSafeArray = (data) => {
+    if (Array.isArray(data)) return data
+    if (Array.isArray(data?.$values)) return data.$values
+    return []
+  }
+
   useEffect(() => {
     const hour = new Date().getHours()
     if (hour < 12) setGreeting('Günaydın')
@@ -92,11 +98,28 @@ export default function Dashboard() {
         api.get('/Tasks'),
       ])
 
-      if (plansRes.status === 'fulfilled') setPlans(plansRes.value.data || [])
-      if (goalsRes.status === 'fulfilled') setGoals(goalsRes.value.data || [])
-      if (tasksRes.status === 'fulfilled') setTasks(tasksRes.value.data || [])
+      if (plansRes.status === 'fulfilled') {
+        setPlans(toSafeArray(plansRes.value.data))
+      } else {
+        setPlans([])
+      }
+
+      if (goalsRes.status === 'fulfilled') {
+        setGoals(toSafeArray(goalsRes.value.data))
+      } else {
+        setGoals([])
+      }
+
+      if (tasksRes.status === 'fulfilled') {
+        setTasks(toSafeArray(tasksRes.value.data))
+      } else {
+        setTasks([])
+      }
     } catch (err) {
-      console.error(err)
+      console.error('FETCH DATA ERROR:', err)
+      setPlans([])
+      setGoals([])
+      setTasks([])
     } finally {
       setLoading(false)
     }
@@ -356,9 +379,13 @@ export default function Dashboard() {
     navigate('/login')
   }
 
-  const completedTasks = tasks.filter((t) => t.isCompleted).length
+  const safePlans = Array.isArray(plans) ? plans : []
+  const safeGoals = Array.isArray(goals) ? goals : []
+  const safeTasks = Array.isArray(tasks) ? tasks : []
+
+  const completedTasks = safeTasks.filter((t) => t.isCompleted).length
   const completionRate =
-    tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0
+    safeTasks.length > 0 ? Math.round((completedTasks / safeTasks.length) * 100) : 0
 
   const earnedBadges = Array.from({ length: completedTasks }, (_, i) => ({
     emoji: '🏆',
@@ -386,7 +413,7 @@ export default function Dashboard() {
   }
 
   const taskPlanTitle = (planId) => {
-    const matchedPlan = plans.find((p) => p.id === planId)
+    const matchedPlan = safePlans.find((p) => p.id === planId)
     return matchedPlan ? matchedPlan.title : 'Plan bulunamadı'
   }
 
@@ -400,10 +427,10 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    { emoji: '📋', label: 'Planlar', value: plans.length, bg: 'linear-gradient(135deg, #f8bbd0, #f48fb1)', text: '#7a1c4b' },
-    { emoji: '🎯', label: 'Hedefler', value: goals.length, bg: 'linear-gradient(135deg, #d1c4e9, #ba68c8)', text: '#4a148c' },
+    { emoji: '📋', label: 'Planlar', value: safePlans.length, bg: 'linear-gradient(135deg, #f8bbd0, #f48fb1)', text: '#7a1c4b' },
+    { emoji: '🎯', label: 'Hedefler', value: safeGoals.length, bg: 'linear-gradient(135deg, #d1c4e9, #ba68c8)', text: '#4a148c' },
     { emoji: '✅', label: 'Tamamlanan', value: completedTasks, bg: 'linear-gradient(135deg, #b2dfdb, #80cbc4)', text: '#00695c' },
-    { emoji: '📝', label: 'Görevler', value: tasks.length, bg: 'linear-gradient(135deg, #fff59d, #ffd54f)', text: '#795548' },
+    { emoji: '📝', label: 'Görevler', value: safeTasks.length, bg: 'linear-gradient(135deg, #fff59d, #ffd54f)', text: '#795548' },
   ]
 
   return (
@@ -562,7 +589,7 @@ export default function Dashboard() {
             </div>
 
             <p style={{ color: '#26a69a', marginBottom: '18px', fontSize: '16px' }}>
-              {tasks.length === 0
+              {safeTasks.length === 0
                 ? 'Henüz görev eklemedin 🌸'
                 : completionRate === 100
                 ? 'Tüm görevleri tamamladın, harikasın 🎉'
@@ -570,7 +597,7 @@ export default function Dashboard() {
                 ? 'Çok iyi gidiyorsun, az kaldı ✨'
                 : completionRate >= 40
                 ? 'İlerlemen güzel, devam et 💪'
-                : `${completedTasks} / ${tasks.length} görev tamamlandı`}
+                : `${completedTasks} / ${safeTasks.length} görev tamamlandı`}
             </p>
 
             <div style={{ width: '100%', height: '16px', background: '#d7f3ef', borderRadius: '999px', overflow: 'hidden' }}>
@@ -788,13 +815,13 @@ export default function Dashboard() {
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '24px 0' }}>Yükleniyor...</div>
-          ) : plans.length === 0 ? (
+          ) : safePlans.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: '#f06292' }}>
               Henüz plan yok! İlk planını oluşturmaya ne dersin? 🌸
             </div>
           ) : (
             <div style={{ display: 'grid', gap: '12px' }}>
-              {plans.map((plan) => (
+              {safePlans.map((plan) => (
                 <div
                   key={plan.id}
                   style={{
@@ -925,13 +952,13 @@ export default function Dashboard() {
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '24px 0' }}>Yükleniyor...</div>
-          ) : goals.length === 0 ? (
+          ) : safeGoals.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: '#ab47bc' }}>
               Henüz hedef yok! Küçük bir hedef bile büyük fark yaratır ✨
             </div>
           ) : (
             <div style={{ display: 'grid', gap: '12px' }}>
-              {goals.map((goal) => (
+              {safeGoals.map((goal) => (
                 <div
                   key={goal.id}
                   style={{
@@ -1001,7 +1028,7 @@ export default function Dashboard() {
               <div style={{ display: 'grid', gap: '12px' }}>
                 <select required value={newTask.planId} onChange={(e) => setNewTask({ ...newTask, planId: e.target.value })} style={inputStyle}>
                   <option value="">Plan seç</option>
-                  {plans.map((plan) => (
+                  {safePlans.map((plan) => (
                     <option key={plan.id} value={plan.id}>{plan.title}</option>
                   ))}
                 </select>
@@ -1027,7 +1054,7 @@ export default function Dashboard() {
                 <p style={{ fontSize: '14px', fontWeight: 700, color: '#e65100' }}>✏️ Görevi Düzenle</p>
                 <select required value={editingTask.planId || ''} onChange={(e) => setEditingTask({ ...editingTask, planId: e.target.value })} style={inputStyle}>
                   <option value="">Plan seç</option>
-                  {plans.map((plan) => (
+                  {safePlans.map((plan) => (
                     <option key={plan.id} value={plan.id}>{plan.title}</option>
                   ))}
                 </select>
@@ -1054,13 +1081,13 @@ export default function Dashboard() {
 
           {loading ? (
             <div style={{ textAlign: 'center', padding: '24px 0' }}>Yükleniyor...</div>
-          ) : tasks.length === 0 ? (
+          ) : safeTasks.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '24px 0', color: '#ffb74d' }}>
               Henüz görev yok! Bugün için minik bir görev ekleyelim mi? 📝
             </div>
           ) : (
             <div style={{ display: 'grid', gap: '12px' }}>
-              {tasks.map((task) => (
+              {safeTasks.map((task) => (
                 <div
                   key={task.id}
                   style={{
