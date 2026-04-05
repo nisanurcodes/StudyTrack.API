@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   css: {
     transformer: 'postcss',
+    lightningcss: false,
   },
   server: {
     proxy: {
@@ -14,5 +15,8 @@ export default defineConfig({
         secure: true,
       },
     },
+  },
+  build: {
+    cssMinify: 'esbuild',
   },
 })
