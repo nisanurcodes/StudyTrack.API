@@ -7,28 +7,17 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Render
+// Render için
 builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
+// Controllers
 builder.Services.AddControllers();
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy
-            .WithOrigins(
-                "http://localhost:5173",
-                "https://localhost:5173"
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod();
-    });
-});
-
+// Database
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// JWT
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -45,6 +34,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -79,9 +69,25 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseRouting();
 
-app.UseCors("AllowFrontend");
+// ?? CORS FIX (KESÝN ÇÖZÜM)
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["Access-Control-Allow-Origin"] = "http://localhost:5173";
+    context.Response.Headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization";
+    context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS";
+
+    if (context.Request.Method == "OPTIONS")
+    {
+        context.Response.StatusCode = 204;
+        return;
+    }
+
+    await next();
+});
+
+
+app.UseRouting();
 
 // app.UseHttpsRedirection();
 
