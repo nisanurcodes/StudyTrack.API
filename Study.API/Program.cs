@@ -7,26 +7,20 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Render için
+// Render için port
 builder.WebHost.UseUrls("http://0.0.0.0:10000");
 
-// CORS
+// 🔥 CORS (Vercel + localhost hepsine izin)
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5173",
-                "http://localhost:5174",
-                "http://localhost:5175",
-                "http://localhost:5176",
-                "http://localhost:5177",
-                "http://localhost:5178",
-                "http://localhost:5179",
-                "https://study-track-api.vercel.app",
-                "https://study-track-h3pq40ek9-nisas-projects-e7fc4199.vercel.app"
-            )
+            .SetIsOriginAllowed(origin =>
+            {
+                return origin.StartsWith("http://localhost:") ||
+                       origin.EndsWith(".vercel.app");
+            })
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -88,19 +82,21 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Veritabanını otomatik oluştur
+// DB migrate
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 }
 
+// Swagger
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+// 🔥 CORS (çok önemli burada olması)
+app.UseCors("AllowFrontend");
 
-app.UseCors("AllowAll");
+app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();
