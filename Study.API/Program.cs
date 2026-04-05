@@ -24,8 +24,8 @@ builder.Services.AddCors(options =>
                 "http://localhost:5177",
                 "http://localhost:5178",
                 "http://localhost:5179",
-                "https://studytrack-api-nu1x.onrender.com",
-                "https://study-track-api.vercel.app"
+                "https://study-track-api.vercel.app",
+                "https://study-track-h3pq40ek9-nisas-projects-e7fc4199.vercel.app"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
@@ -69,6 +69,7 @@ builder.Services.AddSwaggerGen(options =>
         In = ParameterLocation.Header,
         Description = "JWT token gir"
     });
+
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -97,10 +98,10 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// CORS middleware sırası çok önemli!
+app.UseHttpsRedirection();
+
 app.UseCors("AllowAll");
 
-app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
