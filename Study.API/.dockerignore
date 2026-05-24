@@ -1,0 +1,5 @@
+bin/
+obj/
+*.user
+study.db
+.gitignore

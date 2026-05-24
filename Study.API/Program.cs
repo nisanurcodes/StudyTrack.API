@@ -91,7 +91,9 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
-app.UseHttpsRedirection();
+// Not: UseHttpsRedirection kaldırıldı.
+// Render'da HTTPS, platform proxy katmanında yönetilir.
+// Docker'da saf HTTP (port 10000) kullanılır.
 
 app.UseRouting();
 
@@ -101,5 +103,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+// Healthcheck endpoint — Docker / Render probe için
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy" }))
+   .AllowAnonymous();
 
 app.Run();

@@ -1,0 +1,43 @@
+services:
+
+  # ── REST API (ASP.NET Core 8 + SQLite) ──────────────────────────────────────
+  backend:
+    build:
+      context: ./Study.API
+      dockerfile: Dockerfile
+    container_name: studytrack-api
+    ports:
+      - "10000:10000"           # http://localhost:10000/swagger
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:10000
+      # SQLite DB'yi kalıcı volume'a taşı
+      - ConnectionStrings__DefaultConnection=Data Source=/data/study.db
+    volumes:
+      - studydb:/data           # DB verisi container yeniden başlayınca korunur
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:10000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  # ── Web Frontend (React + Vite → nginx) ────────────────────────────────────
+  frontend:
+    build:
+      context: ./study-frontend
+      dockerfile: Dockerfile
+      args:
+        # Tarayıcı bu URL'i kullanır; 127.0.0.1 = host makinenin backend portu
+        - VITE_API_URL=http://127.0.0.1:10000/api
+    container_name: studytrack-frontend
+    ports:
+      - "3000:80"               # http://localhost:3000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  studydb:                      # SQLite dosyası için kalıcı Docker volume
