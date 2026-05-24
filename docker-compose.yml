@@ -1,5 +1,18 @@
 services:
 
+  # ── Redis Cache ──────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: studytrack-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ── REST API (ASP.NET Core 8 + SQLite) ──────────────────────────────────────
   backend:
     build:
@@ -13,8 +26,13 @@ services:
       - ASPNETCORE_URLS=http://+:10000
       # SQLite DB'yi kalıcı volume'a taşı
       - ConnectionStrings__DefaultConnection=Data Source=/data/study.db
+      # Redis bağlantısı (container adı üzerinden erişim)
+      - ConnectionStrings__Redis=redis:6379
     volumes:
       - studydb:/data           # DB verisi container yeniden başlayınca korunur
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:10000/health || exit 1"]

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Study.API.Data;
 using Study.API.DTOs;
 using Study.API.Models;
+using Study.API.Services;
 
 namespace Study.API.Controllers
 {
@@ -11,10 +12,12 @@ namespace Study.API.Controllers
     public class TasksController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly ICacheService _cache;
 
-        public TasksController(AppDbContext db)
+        public TasksController(AppDbContext db, ICacheService cache)
         {
             _db = db;
+            _cache = cache;
         }
 
         [HttpGet]
@@ -40,9 +43,9 @@ namespace Study.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateTask([FromBody] TaskDto dto)
         {
-            var planExists = await _db.Plans.AnyAsync(p => p.Id == dto.PlanId);
+            var plan = await _db.Plans.FirstOrDefaultAsync(p => p.Id == dto.PlanId);
 
-            if (!planExists)
+            if (plan == null)
             {
                 return BadRequest(new { message = "Geçerli bir plan seçmelisin" });
             }
@@ -57,6 +60,8 @@ namespace Study.API.Controllers
 
             _db.Tasks.Add(task);
             await _db.SaveChangesAsync();
+
+            await _cache.DeleteAsync($"dashboard_stats:{plan.UserId}");
 
             return Ok(new
             {
@@ -75,9 +80,9 @@ namespace Study.API.Controllers
                 return NotFound(new { message = "Görev bulunamadı" });
             }
 
-            var planExists = await _db.Plans.AnyAsync(p => p.Id == dto.PlanId);
+            var plan = await _db.Plans.FirstOrDefaultAsync(p => p.Id == dto.PlanId);
 
-            if (!planExists)
+            if (plan == null)
             {
                 return BadRequest(new { message = "Geçerli bir plan seçmelisin" });
             }
@@ -88,6 +93,8 @@ namespace Study.API.Controllers
             task.PlanId = dto.PlanId;
 
             await _db.SaveChangesAsync();
+
+            await _cache.DeleteAsync($"dashboard_stats:{plan.UserId}");
 
             return Ok(new
             {
@@ -106,8 +113,14 @@ namespace Study.API.Controllers
                 return NotFound(new { message = "Görev bulunamadı" });
             }
 
+            // Cache invalidation için planın sahibini önceden al
+            var plan = await _db.Plans.FindAsync(task.PlanId);
+
             _db.Tasks.Remove(task);
             await _db.SaveChangesAsync();
+
+            if (plan != null)
+                await _cache.DeleteAsync($"dashboard_stats:{plan.UserId}");
 
             return Ok(new
             {

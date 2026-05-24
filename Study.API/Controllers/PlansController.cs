@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Study.API.Data;
 using Study.API.Models;
 using Study.API.DTOs;
+using Study.API.Services;
 using System.Security.Claims;
 
 namespace Study.API.Controllers
@@ -14,10 +15,12 @@ namespace Study.API.Controllers
     public class PlansController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly ICacheService _cache;
 
-        public PlansController(AppDbContext db)
+        public PlansController(AppDbContext db, ICacheService cache)
         {
             _db = db;
+            _cache = cache;
         }
 
         [HttpGet]
@@ -87,6 +90,8 @@ namespace Study.API.Controllers
             _db.Plans.Add(plan);
             await _db.SaveChangesAsync();
 
+            await _cache.DeleteAsync($"dashboard_stats:{userId}");
+
             return Ok(new
             {
                 message = "Plan başarıyla oluşturuldu",
@@ -122,6 +127,8 @@ namespace Study.API.Controllers
 
             await _db.SaveChangesAsync();
 
+            await _cache.DeleteAsync($"dashboard_stats:{userId}");
+
             return Ok(new
             {
                 message = "Plan güncellendi",
@@ -151,6 +158,8 @@ namespace Study.API.Controllers
 
             _db.Plans.Remove(plan);
             await _db.SaveChangesAsync();
+
+            await _cache.DeleteAsync($"dashboard_stats:{userId}");
 
             return Ok(new
             {

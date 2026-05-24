@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Study.API.Data;
 using Study.API.DTOs;
 using Study.API.Models;
+using Study.API.Services;
 using System.Security.Claims;
 
 namespace Study.API.Controllers
@@ -14,10 +15,12 @@ namespace Study.API.Controllers
     public class GoalsController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly ICacheService _cache;
 
-        public GoalsController(AppDbContext db)
+        public GoalsController(AppDbContext db, ICacheService cache)
         {
             _db = db;
+            _cache = cache;
         }
 
         private int GetCurrentUserId()
@@ -77,6 +80,8 @@ namespace Study.API.Controllers
             _db.Goals.Add(goal);
             await _db.SaveChangesAsync();
 
+            await _cache.DeleteAsync($"dashboard_stats:{currentUserId}");
+
             return Ok(new
             {
                 message = "Hedef başarıyla oluşturuldu",
@@ -104,6 +109,8 @@ namespace Study.API.Controllers
 
             await _db.SaveChangesAsync();
 
+            await _cache.DeleteAsync($"dashboard_stats:{currentUserId}");
+
             return Ok(new
             {
                 message = "Hedef güncellendi",
@@ -126,6 +133,8 @@ namespace Study.API.Controllers
 
             _db.Goals.Remove(goal);
             await _db.SaveChangesAsync();
+
+            await _cache.DeleteAsync($"dashboard_stats:{currentUserId}");
 
             return Ok(new
             {

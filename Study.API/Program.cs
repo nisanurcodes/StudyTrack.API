@@ -2,7 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using StackExchange.Redis;
 using Study.API.Data;
+using Study.API.Services;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +26,22 @@ builder.Services.AddCors(options =>
             .AllowCredentials();
     });
 });
+
+// Redis (graceful fallback — Redis yoksa uygulama çalışmaya devam eder)
+var redisConnectionString = builder.Configuration.GetConnectionString("Redis") ?? "localhost:6379";
+IConnectionMultiplexer? redisMultiplexer = null;
+try
+{
+    redisMultiplexer = await ConnectionMultiplexer.ConnectAsync(redisConnectionString);
+    Console.WriteLine("✅ Redis bağlantısı kuruldu.");
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"⚠️  Redis bağlanamadı, cache devre dışı: {ex.Message}");
+}
+// Null olsa bile non-nullable arayüz olarak kayıt (CacheService içinde null kontrolü yapılır)
+builder.Services.AddSingleton<IConnectionMultiplexer>(_ => redisMultiplexer!);
+builder.Services.AddSingleton<ICacheService, CacheService>();
 
 // Controllers
 builder.Services.AddControllers();
