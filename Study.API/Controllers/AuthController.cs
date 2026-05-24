@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Study.API.Data;
@@ -97,6 +98,39 @@ namespace Study.API.Controllers
                 message = "Giriş başarılı",
                 token = tokenString,
                 user = user
+            });
+        }
+
+        [Authorize]
+        [HttpPut("profile")]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto dto)
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(userIdStr, out int userId))
+                return Unauthorized(new { message = "Geçersiz token." });
+
+            var user = await _db.Users.FindAsync(userId);
+            if (user == null)
+                return NotFound(new { message = "Kullanıcı bulunamadı." });
+
+            if (string.IsNullOrWhiteSpace(dto.Name))
+                return BadRequest(new { message = "Ad Soyad zorunludur." });
+
+            if (string.IsNullOrWhiteSpace(dto.Email))
+                return BadRequest(new { message = "E-posta zorunludur." });
+
+            var emailTaken = await _db.Users.AnyAsync(u => u.Email == dto.Email.Trim() && u.Id != userId);
+            if (emailTaken)
+                return BadRequest(new { message = "Bu e-posta adresi başka bir hesapta kullanılıyor." });
+
+            user.Name  = dto.Name.Trim();
+            user.Email = dto.Email.Trim();
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Profil güncellendi",
+                user = new { user.Id, user.Name, user.Email }
             });
         }
 
